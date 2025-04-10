@@ -1,0 +1,3490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meteora DLMM Manager</title>
+  <!-- Font Awesome for icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0F1422;
+      --bg-secondary: #161d31;
+      --accent-color: #7367F0;
+      --accent-light: rgba(115, 103, 240, 0.2);
+      --text-primary: #ffffff;
+      --text-secondary: #B4B7BD;
+      --text-muted: #676D7D;
+      --green: #28C76F;
+      --green-light: rgba(40, 199, 111, 0.2);
+      --red: #EA5455;
+      --red-light: rgba(234, 84, 85, 0.2);
+      --yellow: #FF9F43;
+      --yellow-light: rgba(255, 159, 67, 0.2);
+      --blue: #00CFE8;
+      --blue-light: rgba(0, 207, 232, 0.2);
+      --border-color: #3B4253;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    a {
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background-color: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    .logo i {
+      margin-right: 0.5rem;
+      color: var(--accent-color);
+    }
+
+    .wallet-btn {
+      background-color: var(--accent-color);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      transition: all 0.2s;
+    }
+
+    .wallet-btn:hover {
+      opacity: 0.9;
+    }
+
+    .wallet-btn i {
+      margin-right: 0.5rem;
+    }
+
+    .wallet-connected {
+      background-color: var(--bg-primary);
+      border: 1px solid var(--green);
+      color: var(--green);
+    }
+
+    /* Main Layout */
+    .main-container {
+      display: flex;
+      flex: 1;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 1rem 0;
+    }
+
+    .nav-item {
+      margin: 0.25rem 0.75rem;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      border-radius: 0.375rem;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+      background-color: var(--accent-light);
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    .nav-link.active {
+      background-color: var(--accent-color);
+      color: white;
+    }
+
+    .nav-link i {
+      width: 1.25rem;
+      margin-right: 0.75rem;
+      text-align: center;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background-color: var(--red);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+      height: 1.25rem;
+      width: 1.25rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Content Area */
+    .content {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .page-title {
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      font-weight: 700;
+    }
+
+    /* Cards */
+    .card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 1rem;
+    }
+
+    .card-footer {
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Stat Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .stats-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .stat-card {
+      padding: 1rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .stat-value.positive {
+      color: var(--green);
+    }
+
+    .stat-value.negative {
+      color: var(--red);
+    }
+
+    /* Position Cards Grid */
+    .positions-grid {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .positions-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .positions-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      border: none;
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background-color: rgba(107, 114, 128, 0.2);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(107, 114, 128, 0.3);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent-color);
+    }
+
+    .btn-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .btn-block {
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 9999px;
+    }
+
+    .badge-success {
+      background-color: var(--green-light);
+      color: var(--green);
+    }
+
+    .badge-danger {
+      background-color: var(--red-light);
+      color: var(--red);
+    }
+
+    .badge-warning {
+      background-color: var(--yellow-light);
+      color: var(--yellow);
+    }
+
+    .badge-info {
+      background-color: var(--blue-light);
+      color: var(--blue);
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th,
+    .table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+    }
+
+    .table th {
+      font-weight: 500;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .table tbody tr {
+      border-top: 1px solid var(--border-color);
+    }
+
+    .table tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    /* Sliders */
+    .range-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--bg-primary);
+      outline: none;
+    }
+
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent-color);
+      cursor: pointer;
+    }
+
+    /* Dropdown */
+    .dropdown {
+      position: relative;
+    }
+
+    .dropdown-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      border-radius: 0.375rem;
+      background-color: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .dropdown-menu {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 0.25rem;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.375rem;
+      z-index: 10;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-item {
+      padding: 0.5rem 0.75rem;
+      color: var(--text-primary);
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: none;
+      font-size: 0.875rem;
+    }
+
+    .dropdown-item:hover {
+      background-color: var(--bg-primary);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+
+    .tab-item {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+    }
+
+    .tab-item:hover {
+      color: var(--accent-color);
+    }
+
+    .tab-item.active {
+      color: var(--accent-color);
+      border-bottom-color: var(--accent-color);
+    }
+
+    /* Alert */
+    .alert {
+      padding: 1rem;
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: flex-start;
+      border: 1px solid transparent;
+    }
+
+    .alert-icon {
+      margin-right: 0.75rem;
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .alert-info {
+      background-color: var(--blue-light);
+      border-color: var(--blue);
+    }
+
+    .alert-info .alert-icon {
+      color: var(--blue);
+    }
+
+    .alert-success {
+      background-color: var(--green-light);
+      border-color: var(--green);
+    }
+
+    .alert-success .alert-icon {
+      color: var(--green);
+    }
+
+    .alert-warning {
+      background-color: var(--yellow-light);
+      border-color: var(--yellow);
+    }
+
+    .alert-warning .alert-icon {
+      color: var(--yellow);
+    }
+
+    .alert-danger {
+      background-color: var(--red-light);
+      border-color: var(--red);
+    }
+
+    .alert-danger .alert-icon {
+      color: var(--red);
+    }
+
+    /* Health indicator */
+    .health-indicator {
+      width: 100%;
+      height: 0.5rem;
+      background-color: var(--bg-primary);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .health-bar {
+      height: 100%;
+      border-radius: 9999px;
+    }
+
+    /* Chart container */
+    .chart-container {
+      width: 100%;
+      height: 300px;
+    }
+
+    /* Two column layout */
+    .two-col-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 1024px) {
+      .two-col-layout {
+        grid-template-columns: 3fr 1fr;
+      }
+    }
+
+    /* Search bar */
+    .search-bar {
+      position: relative;
+    }
+
+    .search-input {
+      padding-left: 2.5rem;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+    }
+
+    /* Token icon */
+    .token-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      position: relative;
+    }
+
+    .token-pair {
+      display: flex;
+      align-items: center;
+    }
+
+    .token-secondary {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 9999px;
+      position: absolute;
+      bottom: -0.125rem;
+      right: -0.125rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.5rem;
+      font-weight: 600;
+    }
+
+    /* Utils */
+    .hidden {
+      display: none;
+    }
+
+    .page {
+      display: none;
+    }
+    
+    .page.active {
+      display: block;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-between {
+      justify-content: space-between;
+    }
+
+    .mr-2 {
+      margin-right: 0.5rem;
+    }
+
+    .ml-2 {
+      margin-left: 0.5rem;
+    }
+
+    .mt-2 {
+      margin-top: 0.5rem;
+    }
+
+    .mb-2 {
+      margin-bottom: 0.5rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+
+    .mt-4 {
+      margin-top: 1rem;
+    }
+
+    .mb-6 {
+      margin-bottom: 1.5rem;
+    }
+
+    .text-sm {
+      font-size: 0.875rem;
+    }
+
+    .text-xs {
+      font-size: 0.75rem;
+    }
+
+    .text-success {
+      color: var(--green);
+    }
+
+    .text-danger {
+      color: var(--red);
+    }
+
+    .text-warning {
+      color: var(--yellow);
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .font-medium {
+      font-weight: 500;
+    }
+
+    .rounded-full {
+      border-radius: 9999px;
+    }
+
+    .bg-accent {
+      background-color: var(--accent-color);
+    }
+
+    .p-2 {
+      padding: 0.5rem;
+    }
+
+    .gap-2 {
+      gap: 0.5rem;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background-color: var(--bg-secondary);
+      border-radius: 0.5rem;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .modal-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-body {
+      padding: 1rem;
+    }
+
+    .modal-footer {
+      padding: 1rem;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* Welcome Message */
+    .welcome-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .welcome-message i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+
+    .welcome-message h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .welcome-message p {
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(15, 20, 34, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      display: none;
+    }
+
+    .loading-overlay.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(115, 103, 240, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--accent-color);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Toast notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 90;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast {
+      padding: 1rem;
+      border-radius: 0.5rem;
+      background-color: var(--bg-secondary);
+      border-left: 4px solid var(--accent-color);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      min-width: 300px;
+      max-width: 450px;
+      transform: translateX(120%);
+      transition: transform 0.3s ease-out;
+    }
+
+    .toast.active {
+      transform: translateX(0);
+    }
+
+    .toast-icon {
+      margin-right: 0.75rem;
+    }
+
+    .toast-content {
+      flex: 1;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .toast-success {
+      border-left-color: var(--green);
+    }
+
+    .toast-success .toast-icon {
+      color: var(--green);
+    }
+
+    .toast-error {
+      border-left-color: var(--red);
+    }
+
+    .toast-error .toast-icon {
+      color: var(--red);
+    }
+
+    .toast-warning {
+      border-left-color: var(--yellow);
+    }
+
+    .toast-warning .toast-icon {
+      color: var(--yellow);
+    }
+
+    .toast-info {
+      border-left-color: var(--blue);
+    }
+
+    .toast-info .toast-icon {
+      color: var(--blue);
+    }
+
+    /* Position card */
+    .position-card {
+      transition: all 0.2s;
+    }
+
+    .position-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Position detail page */
+    .position-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .position-stats {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .strategy-options {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 1rem;
+    }
+
+    @media (min-width: 640px) {
+      .strategy-options {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .strategy-options {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .strategy-card {
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .strategy-card:hover {
+      border-color: var(--accent-color);
+    }
+
+    .strategy-card.selected {
+      border-color: var(--accent-color);
+      background-color: var(--accent-light);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <i class="fas fa-layer-group"></i>
+        <span>Meteora DLMM Manager</span>
+      </div>
+      <button id="wallet-btn" class="wallet-btn">
+        <i class="fas fa-wallet"></i>
+        <span>Connect Wallet</span>
+      </button>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#" class="nav-link active" data-page="dashboard">
+              <i class="fas fa-home"></i>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="positions">
+              <i class="fas fa-layer-group"></i>
+              <span>My Positions</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="pools">
+              <i class="fas fa-chart-line"></i>
+              <span>Pool Explorer</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="strategy">
+              <i class="fas fa-chess"></i>
+              <span>Strategy Builder</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="alerts">
+              <i class="fas fa-bell"></i>
+              <span>Alerts</span>
+              <span class="nav-badge">3</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a href="#" class="nav-link" data-page="settings">
+              <i class="fas fa-cog"></i>
+              <span>Settings</span>
+            </a>
+          </li>
+        </ul>
+      </aside>
+
+      <!-- Content Area -->
+      <main class="content">
+        <!-- Welcome Message (shown when no wallet is connected) -->
+        <div id="welcome-page" class="page">
+          <div class="welcome-message">
+            <i class="fas fa-layer-group"></i>
+            <h2>Welcome to Meteora DLMM Manager</h2>
+            <p>Connect your wallet to start managing your DeFi liquidity positions with advanced tools and analytics.</p>
+            <button id="welcome-connect-btn" class="btn btn-primary">
+              <i class="fas fa-wallet mr-2"></i>
+              Connect Wallet
+            </button>
+          </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboard-page" class="page">
+          <h1 class="page-title">Dashboard Overview</h1>
+
+          <!-- Stats Row -->
+          <div class="stats-grid">
+            <div class="card stat-card">
+              <div class="stat-label">Total Value Locked</div>
+              <div class="stat-value">$124,583.45</div>
+            </div>
+            <div class="card stat-card">
+              <div class="stat-label">24h Fee Earnings</div>
+              <div class="stat-value positive">$487.12</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-label">Impermanent Loss</div>
+                <div class="stat-value negative">-$215.75</div>
+              </div>
+              <div class="card stat-card">
+                <div class="stat-label">Active Positions</div>
+                <div class="stat-value">7</div>
+              </div>
+            </div>
+  
+            <!-- Chart and Position Management -->
+            <div class="two-col-layout mb-6">
+              <!-- Price Chart -->
+              <div class="card">
+                <div class="card-header">
+                  <h2 class="card-title">SOL/USDC Price & Volume</h2>
+                  <div class="flex">
+                    <button class="btn btn-sm btn-primary timeframe-btn" data-timeframe="24h">24h</button>
+                    <button class="btn btn-sm btn-outline timeframe-btn ml-2" data-timeframe="7d">7d</button>
+                    <button class="btn btn-sm btn-outline timeframe-btn ml-2" data-timeframe="30d">30d</button>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                  </div>
+                  <div class="flex justify-between text-sm text-muted mt-2">
+                    <span>Current Price: $95.20</span>
+                    <span>Range: $82.45 - $98.75</span>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- Position Management -->
+              <div class="card">
+                <div class="card-header">
+                  <h2 class="card-title">Position Management</h2>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">Min Price: $<span id="min-price-display">82.45</span></label>
+                    <input 
+                      type="range" 
+                      id="min-price-range" 
+                      class="range-slider" 
+                      min="70" 
+                      max="90" 
+                      step="0.05" 
+                      value="82.45"
+                    >
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">Max Price: $<span id="max-price-display">98.75</span></label>
+                    <input 
+                      type="range" 
+                      id="max-price-range" 
+                      class="range-slider" 
+                      min="90" 
+                      max="110" 
+                      step="0.05" 
+                      value="98.75"
+                    >
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">Fee Tier</label>
+                    <div class="dropdown">
+                      <button class="dropdown-toggle" id="fee-tier-dropdown">
+                        <span id="fee-tier-value">0.3%</span>
+                        <i class="fas fa-chevron-down"></i>
+                      </button>
+                      <div class="dropdown-menu" id="fee-tier-menu">
+                        <button class="dropdown-item" data-value="0.01%">0.01%</button>
+                        <button class="dropdown-item" data-value="0.05%">0.05%</button>
+                        <button class="dropdown-item" data-value="0.3%">0.3%</button>
+                        <button class="dropdown-item" data-value="1%">1%</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <button class="btn btn-primary btn-block" id="adjust-position-btn">
+                      Adjust Position
+                    </button>
+                  </div>
+                  
+                  <div class="form-group">
+                    <button class="btn btn-outline btn-block" id="claim-fees-btn">
+                      Claim Fees
+                    </button>
+                  </div>
+  
+                  <div class="alert alert-info mt-4">
+                    <div class="alert-icon">
+                      <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="alert-content">
+                      <div class="alert-title">Strategy Analysis</div>
+                      <p class="text-sm">Current range utilization: <span class="text-success">92%</span></p>
+                      <a href="#" id="view-recommendations">View recommendations →</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Volume Forecast -->
+            <div class="card mb-6">
+              <div class="card-header">
+                <h2 class="card-title">Volume Forecast & Fee Projections</h2>
+                <button class="btn btn-sm btn-outline" id="refresh-forecast">
+                  <i class="fas fa-sync-alt mr-2"></i>
+                  Refresh
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="forecastChart"></canvas>
+                </div>
+                <div class="flex justify-between text-sm text-muted mt-2">
+                  <span>Projected 30-day fees: $1,458.34</span>
+                  <span>Annualized APR: 14.2%</span>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Activity Feed -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Recent Activity</h2>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Details</th>
+                        <th>Amount</th>
+                        <th>Time</th>
+                      </tr>
+                    </thead>
+                    <tbody id="activity-feed">
+                      <tr>
+                        <td>
+                          <span class="badge badge-success">Fee Claim</span>
+                        </td>
+                        <td>SOL/USDC Position #0012</td>
+                        <td>$52.45</td>
+                        <td>2h ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-info">Range Adjustment</span>
+                        </td>
+                        <td>ETH/USDC Position #0045</td>
+                        <td>-</td>
+                        <td>5h ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-warning">Out of Range</span>
+                        </td>
+                        <td>BONK/USDC Position #0032</td>
+                        <td>-</td>
+                        <td>6h ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-success">Fee Claim</span>
+                        </td>
+                        <td>JTO/USDC Position #0028</td>
+                        <td>$38.21</td>
+                        <td>1d ago</td>
+                      </tr>
+                      <tr>
+                        <td>
+                          <span class="badge badge-info">New Position</span>
+                        </td>
+                        <td>SOL/USDC Position #0012</td>
+                        <td>$45,621.32</td>
+                        <td>2d ago</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card-footer">
+                <a href="#" id="view-all-activity">View all activity →</a>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Positions Page -->
+          <div id="positions-page" class="page">
+            <h1 class="page-title">My Positions</h1>
+            
+            <!-- Filters -->
+            <div class="card mb-6">
+              <div class="card-body">
+                <div class="flex items-center">
+                  <div class="search-bar mr-2" style="width: 250px;">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control search-input" id="position-search" placeholder="Search by token or ID">
+                  </div>
+                  
+                  <div class="dropdown mr-2" style="width: 180px;">
+                    <button class="dropdown-toggle" id="status-filter-dropdown">
+                      <span id="status-filter-value">All Statuses</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="status-filter-menu">
+                      <button class="dropdown-item" data-value="all">All Statuses</button>
+                      <button class="dropdown-item" data-value="active">Active</button>
+                      <button class="dropdown-item" data-value="outOfRange">Out of Range</button>
+                    </div>
+                  </div>
+                  
+                  <div class="dropdown" style="width: 180px;">
+                    <button class="dropdown-toggle" id="sort-dropdown">
+                      <span id="sort-value">Value (High to Low)</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="sort-menu">
+                      <button class="dropdown-item" data-value="valueHighToLow">Value (High to Low)</button>
+                      <button class="dropdown-item" data-value="valueLowToHigh">Value (Low to High)</button>
+                      <button class="dropdown-item" data-value="feeHighToLow">Fees (High to Low)</button>
+                      <button class="dropdown-item" data-value="healthHighToLow">Health (High to Low)</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Positions Grid -->
+            <div class="positions-grid" id="positions-grid">
+              <!-- Positions will be populated here by JavaScript -->
+            </div>
+          </div>
+  
+          <!-- Pool Explorer Page -->
+          <div id="pools-page" class="page">
+            <h1 class="page-title">Pool Explorer</h1>
+            
+            <!-- Pools Table -->
+            <div class="card">
+              <div class="card-body">
+                <div class="table-container">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Pool</th>
+                        <th>TVL</th>
+                        <th>24h Volume</th>
+                        <th>24h Fees</th>
+                        <th>APR</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pools-table-body">
+                      <!-- Pool data will be populated here by JavaScript -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Strategy Builder Page -->
+        <div id="strategy-page" class="page">
+            <h1 class="page-title">Strategy Builder</h1>
+            
+            <!-- Strategy Configuration -->
+            <div class="two-col-layout mb-6">
+              <div class="card">
+                <div class="card-header">
+                  <h2 class="card-title">Configure Your Strategy</h2>
+                </div>
+                <div class="card-body">
+                  <div class="form-group">
+                    <label class="form-label">Token Pair</label>
+                    <div class="dropdown">
+                      <button class="dropdown-toggle" id="token-pair-dropdown">
+                        <span id="token-pair-value">SOL/USDC</span>
+                        <i class="fas fa-chevron-down"></i>
+                      </button>
+                      <div class="dropdown-menu" id="token-pair-menu">
+                        <button class="dropdown-item" data-value="SOL/USDC">SOL/USDC</button>
+                        <button class="dropdown-item" data-value="ETH/USDC">ETH/USDC</button>
+                        <button class="dropdown-item" data-value="BONK/USDC">BONK/USDC</button>
+                        <button class="dropdown-item" data-value="JTO/USDC">JTO/USDC</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">Investment Amount</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="investment-amount" 
+                      placeholder="Enter amount in USDC"
+                      value="10000"
+                    >
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">Investment Timeframe</label>
+                    <div class="dropdown">
+                      <button class="dropdown-toggle" id="timeframe-dropdown">
+                        <span id="timeframe-value">30 days</span>
+                        <i class="fas fa-chevron-down"></i>
+                      </button>
+                      <div class="dropdown-menu" id="timeframe-menu">
+                        <button class="dropdown-item" data-value="7">7 days</button>
+                        <button class="dropdown-item" data-value="30">30 days</button>
+                        <button class="dropdown-item" data-value="90">90 days</button>
+                        <button class="dropdown-item" data-value="180">180 days</button>
+                        <button class="dropdown-item" data-value="365">365 days</button>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label class="form-label">Risk Tolerance</label>
+                    <input 
+                      type="range" 
+                      id="risk-tolerance" 
+                      class="range-slider" 
+                      min="1" 
+                      max="10" 
+                      step="1" 
+                      value="5"
+                    >
+                    <div class="flex justify-between text-xs text-muted">
+                      <span>Conservative</span>
+                      <span id="risk-value">Moderate</span>
+                      <span>Aggressive</span>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <button class="btn btn-primary btn-block" id="generate-strategies">
+                      Generate Strategies
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card">
+                <div class="card-header">
+                  <h2 class="card-title">Market Analysis</h2>
+                </div>
+                <div class="card-body">
+                  <div class="chart-container" style="height: 200px;">
+                    <canvas id="volatilityChart"></canvas>
+                  </div>
+                  <div class="mt-4">
+                    <h3 class="text-sm font-medium mb-2">Key Metrics</h3>
+                    <div class="flex justify-between mb-2">
+                      <span class="text-sm">30-day Volatility:</span>
+                      <span class="text-sm">28.4%</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                      <span class="text-sm">Price Trend:</span>
+                      <span class="text-sm text-success">Bullish</span>
+                    </div>
+                    <div class="flex justify-between mb-2">
+                      <span class="text-sm">Volume Trend:</span>
+                      <span class="text-sm text-success">Increasing</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span class="text-sm">Current Price:</span>
+                      <span class="text-sm">$95.20</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Strategy Options (hidden initially) -->
+            <div id="strategy-options-container" class="hidden">
+              <h2 class="text-sm font-medium mb-4">Recommended Strategies</h2>
+              <div class="strategy-options" id="strategy-options">
+                <!-- Strategy cards will be populated here by JavaScript -->
+              </div>
+              
+              <div class="flex justify-between mt-4">
+                <button class="btn btn-outline" id="reset-strategies">
+                  <i class="fas fa-redo mr-2"></i>
+                  Reset
+                </button>
+                <button class="btn btn-primary" id="deploy-strategy">
+                  <i class="fas fa-rocket mr-2"></i>
+                  Deploy Selected Strategy
+                </button>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Alerts Page -->
+          <div id="alerts-page" class="page">
+            <h1 class="page-title">Alerts</h1>
+            
+            <!-- Alerts Table -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Notifications</h2>
+                <button class="btn btn-sm btn-outline" id="mark-all-read">
+                  Mark All Read
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Message</th>
+                        <th>Time</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="alerts-table-body">
+                      <!-- Alert data will be populated here by JavaScript -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Create Alert -->
+            <div class="card mt-6">
+              <div class="card-header">
+                <h2 class="card-title">Create New Alert</h2>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Alert Type</label>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" id="alert-type-dropdown">
+                      <span id="alert-type-value">Price Alert</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="alert-type-menu">
+                      <button class="dropdown-item" data-value="price">Price Alert</button>
+                      <button class="dropdown-item" data-value="range">Range Alert</button>
+                      <button class="dropdown-item" data-value="volume">Volume Alert</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Token/Position</label>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" id="alert-token-dropdown">
+                      <span id="alert-token-value">SOL</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="alert-token-menu">
+                      <button class="dropdown-item" data-value="SOL">SOL</button>
+                      <button class="dropdown-item" data-value="ETH">ETH</button>
+                      <button class="dropdown-item" data-value="BONK">BONK</button>
+                      <button class="dropdown-item" data-value="JTO">JTO</button>
+                      <button class="dropdown-item" data-value="pos-001">Position #001 (SOL/USDC)</button>
+                      <button class="dropdown-item" data-value="pos-002">Position #002 (ETH/USDC)</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Condition</label>
+                  <div class="flex items-center">
+                    <div class="dropdown mr-2" style="width: 180px;">
+                      <button class="dropdown-toggle" id="condition-dropdown">
+                        <span id="condition-value">Price above</span>
+                        <i class="fas fa-chevron-down"></i>
+                      </button>
+                      <div class="dropdown-menu" id="condition-menu">
+                        <button class="dropdown-item" data-value="above">Price above</button>
+                        <button class="dropdown-item" data-value="below">Price below</button>
+                        <button class="dropdown-item" data-value="increase">Price increases by</button>
+                        <button class="dropdown-item" data-value="decrease">Price decreases by</button>
+                      </div>
+                    </div>
+                    
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="condition-value" 
+                      placeholder="Enter value"
+                      style="width: 150px;"
+                      value="100"
+                    >
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <button class="btn btn-primary" id="create-alert">
+                    Create Alert
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Settings Page -->
+          <div id="settings-page" class="page">
+            <h1 class="page-title">Settings</h1>
+            
+            <!-- Settings Form -->
+            <div class="card">
+              <div class="card-header">
+                <h2 class="card-title">Application Settings</h2>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Default Currency</label>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" id="currency-dropdown">
+                      <span id="currency-value">USD</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="currency-menu">
+                      <button class="dropdown-item" data-value="USD">USD</button>
+                      <button class="dropdown-item" data-value="EUR">EUR</button>
+                      <button class="dropdown-item" data-value="GBP">GBP</button>
+                      <button class="dropdown-item" data-value="JPY">JPY</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Default Timeframe</label>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" id="default-timeframe-dropdown">
+                      <span id="default-timeframe-value">24h</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="default-timeframe-menu">
+                      <button class="dropdown-item" data-value="24h">24h</button>
+                      <button class="dropdown-item" data-value="7d">7d</button>
+                      <button class="dropdown-item" data-value="30d">30d</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">Notification Settings</label>
+                  <div class="flex items-center mb-2">
+                    <input type="checkbox" id="price-alerts" checked>
+                    <label for="price-alerts" class="ml-2 text-sm">Price Alerts</label>
+                  </div>
+                  <div class="flex items-center mb-2">
+                    <input type="checkbox" id="range-alerts" checked>
+                    <label for="range-alerts" class="ml-2 text-sm">Range Alerts</label>
+                  </div>
+                  <div class="flex items-center mb-2">
+                    <input type="checkbox" id="system-alerts" checked>
+                    <label for="system-alerts" class="ml-2 text-sm">System Alerts</label>
+                  </div>
+                  <div class="flex items-center">
+                    <input type="checkbox" id="email-notifications">
+                    <label for="email-notifications" class="ml-2 text-sm">Email Notifications</label>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label class="form-label">RPC Endpoint</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="rpc-endpoint" 
+                    placeholder="Enter RPC endpoint URL"
+                    value="https://api.mainnet-beta.solana.com"
+                  >
+                </div>
+                  
+                <div class="form-group">
+                  <button class="btn btn-primary" id="save-settings">
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            </div>
+              
+            <!-- Theme Settings -->
+            <div class="card mt-6">
+              <div class="card-header">
+                <h2 class="card-title">Theme Settings</h2>
+              </div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Theme</label>
+                  <div class="dropdown">
+                    <button class="dropdown-toggle" id="theme-dropdown">
+                      <span id="theme-value">Dark</span>
+                      <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="theme-menu">
+                      <button class="dropdown-item" data-value="dark">Dark</button>
+                      <button class="dropdown-item" data-value="light">Light</button>
+                    </div>
+                  </div>
+                </div>
+                  
+                <div class="form-group">
+                  <label class="form-label">Accent Color</label>
+                  <div class="flex gap-2">
+                    <button class="btn-accent-color rounded-full p-2 bg-accent" data-color="#7367F0" style="width: 30px; height: 30px;"></button>
+                    <button class="btn-accent-color rounded-full p-2" data-color="#EA5455" style="width: 30px; height: 30px; background-color: #EA5455;"></button>
+                    <button class="btn-accent-color rounded-full p-2" data-color="#28C76F" style="width: 30px; height: 30px; background-color: #28C76F;"></button>
+                    <button class="btn-accent-color rounded-full p-2" data-color="#00CFE8" style="width: 30px; height: 30px; background-color: #00CFE8;"></button>
+                    <button class="btn-accent-color rounded-full p-2" data-color="#FF9F43" style="width: 30px; height: 30px; background-color: #FF9F43;"></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+              
+            <!-- App Information -->
+            <div class="card mt-6">
+              <div class="card-header">
+                <h2 class="card-title">App Information</h2>
+              </div>
+              <div class="card-body">
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm">Version</span>
+                  <span class="text-sm">1.0.0</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm">Last Update</span>
+                  <span class="text-sm">April 8, 2025</span>
+                </div>
+                <div class="flex justify-between mb-2">
+                  <span class="text-sm">Built with</span>
+                  <span class="text-sm">Meteora SDK v2.3.1</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-sm">License</span>
+                  <span class="text-sm">MIT</span>
+                </div>
+              </div>
+              <div class="card-footer">
+                <a href="#" id="view-documentation">View documentation</a>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+<!-- Modals -->
+  <!-- Recommendations Modal -->
+  <div class="modal-backdrop" id="recommendations-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Position Recommendations</h3>
+        <button class="modal-close" id="close-recommendations-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-4">Based on market conditions and your position performance, here are our recommendations:</p>
+        <div class="alert alert-success mb-4">
+          <div class="alert-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="alert-content">
+            <div class="alert-title">Optimize Range</div>
+            <p class="text-sm">Adjust your price range to $85.30 - $102.50 to optimize for current volatility.</p>
+          </div>
+        </div>
+        <div class="alert alert-info mb-4">
+          <div class="alert-icon">
+            <i class="fas fa-info-circle"></i>
+          </div>
+          <div class="alert-content">
+            <div class="alert-title">Increase Capital Efficiency</div>
+            <p class="text-sm">Consider shifting from 0.3% fee tier to 0.05% for this pair to increase capital efficiency.</p>
+          </div>
+        </div>
+        <div class="alert alert-warning">
+          <div class="alert-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <div class="alert-content">
+            <div class="alert-title">Monitor Volatility</div>
+            <p class="text-sm">SOL volatility has increased by 15% over the past week. Consider widening your range if this trend continues.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="dismiss-recommendations">Dismiss</button>
+        <button class="btn btn-primary" id="apply-recommendations">Apply Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transaction Confirmation Modal -->
+  <div class="modal-backdrop" id="transaction-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm Transaction</h3>
+        <button class="modal-close" id="close-transaction-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-4">Please review the details of your transaction:</p>
+        <div class="form-group">
+          <label class="form-label">Action</label>
+          <div class="form-control" id="tx-action">Adjust Position Range</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Position</label>
+          <div class="form-control" id="tx-position">SOL/USDC #0012</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Parameters</label>
+          <div class="form-control" id="tx-params">Price Range: $85.30 - $102.50</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estimated Gas Fee</label>
+          <div class="form-control" id="tx-gas">0.000012 SOL</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" id="cancel-transaction">Cancel</button>
+        <button class="btn btn-primary" id="confirm-transaction">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container">
+    <!-- Toasts will be added here dynamically -->
+  </div>
+  <!-- App JavaScript -->
+  <script>
+    // Mock Data
+    const mockData = {
+      tokens: [
+        { symbol: 'SOL', name: 'Solana', price: 95.20, change24h: 2.35 },
+        { symbol: 'USDC', name: 'USD Coin', price: 1.00, change24h: 0.00 },
+        { symbol: 'ETH', name: 'Ethereum', price: 3478.50, change24h: 1.27 },
+        { symbol: 'BONK', name: 'Bonk', price: 0.000021, change24h: -3.42 },
+        { symbol: 'JTO', name: 'Jito', price: 3.82, change24h: 0.95 }
+      ],
+      positions: [
+        { 
+          id: 'pos-001', 
+          pair: 'SOL/USDC', 
+          value: 45621.32, 
+          minPrice: 82.45, 
+          maxPrice: 98.75, 
+          feeTier: '0.3%',
+          feeEarned: 187.45,
+          status: 'active',
+          health: 92
+        },
+        { 
+          id: 'pos-002', 
+          pair: 'ETH/USDC', 
+          value: 38450.18, 
+          minPrice: 3050.25, 
+          maxPrice: 3950.50, 
+          feeTier: '0.05%',
+          feeEarned: 145.23,
+          status: 'active',
+          health: 87
+        },
+        { 
+          id: 'pos-003', 
+          pair: 'BONK/USDC', 
+          value: 8754.50, 
+          minPrice: 0.0000175, 
+          maxPrice: 0.0000245, 
+          feeTier: '1%',
+          feeEarned: 95.67,
+          status: 'outOfRange',
+          health: 42
+        },
+        { 
+          id: 'pos-004', 
+          pair: 'JTO/USDC', 
+          value: 12150.75, 
+          minPrice: 3.25, 
+          maxPrice: 4.45, 
+          feeTier: '0.3%',
+          feeEarned: 58.77,
+          status: 'active',
+          health: 78
+        }
+      ],
+      pools: [
+        { pair: 'SOL/USDC', tvl: 245000000, volume24h: 28500000, fees24h: 85500, apr: 16.42 },
+        { pair: 'ETH/USDC', tvl: 315000000, volume24h: 32400000, fees24h: 97200, apr: 14.87 },
+        { pair: 'BONK/USDC', tvl: 42000000, volume24h: 15800000, fees24h: 158000, apr: 22.35 },
+        { pair: 'JTO/USDC', tvl: 22000000, volume24h: 5200000, fees24h: 15600, apr: 18.25 },
+        { pair: 'JUP/USDC', tvl: 18500000, volume24h: 3800000, fees24h: 11400, apr: 15.30 }
+      ],
+      alerts: [
+        { id: 'alert-1', type: 'price', message: 'SOL price dropped below your alert threshold of $90', createdAt: '2h ago', status: 'unread' },
+        { id: 'alert-2', type: 'position', message: 'Position #003 (BONK/USDC) is now out of range', createdAt: '5h ago', status: 'unread' },
+        { id: 'alert-3', type: 'system', message: 'New protocol update available - v1.2.4', createdAt: '1d ago', status: 'unread' }
+      ],
+      strategies: [
+        {
+          id: 'strategy-1',
+          name: 'Conservative Range',
+          description: 'Wide range with lower risk and steady returns',
+          minPrice: 80.92,
+          maxPrice: 110.45,
+          feeTier: '0.3%',
+          estimatedApr: 12.5,
+          riskLevel: 'Low'
+        },
+        {
+          id: 'strategy-2',
+          name: 'Balanced Range',
+          description: 'Moderate range balancing returns and capital efficiency',
+          minPrice: 85.68,
+          maxPrice: 105.72,
+          feeTier: '0.3%',
+          estimatedApr: 15.8,
+          riskLevel: 'Medium'
+        },
+        {
+          id: 'strategy-3',
+          name: 'Aggressive Range',
+          description: 'Narrow range with higher capital efficiency',
+          minPrice: 90.44,
+          maxPrice: 100.96,
+          feeTier: '0.05%',
+          estimatedApr: 19.2,
+          riskLevel: 'High'
+        }
+      ]
+    };
+
+    // Helper function to generate price data
+    function generatePriceData(hours, currentPrice, volatility) {
+      const data = [];
+      let price = currentPrice;
+      const now = new Date();
+      
+      for (let i = hours; i >= 0; i--) {
+        const change = (Math.random() - 0.5) * (volatility / 100);
+        price = price * (1 + change);
+        
+        const time = new Date(now);
+        time.setHours(now.getHours() - i);
+        
+        const volume = 500000 + Math.random() * 1000000;
+        
+        data.push({
+          time: time.toISOString(),
+          price: price,
+          volume: volume
+        });
+      }
+      
+      return data;
+    }
+
+    // Generate mock price data
+    const priceData = {
+      '24h': generatePriceData(24, 95.20, 12),
+      '7d': generatePriceData(7*24, 95.20, 24),
+      '30d': generatePriceData(30*24, 95.20, 30)
+    };
+
+    // App State
+    let appState = {
+      walletConnected: false,
+      currentPage: 'welcome',
+      selectedTimeframe: '24h',
+      selectedPosition: mockData.positions[0],
+      selectedStrategy: null
+    };
+
+    // DOM Elements
+    const pages = {
+      welcome: document.getElementById('welcome-page'),
+      dashboard: document.getElementById('dashboard-page'),
+      positions: document.getElementById('positions-page'),
+      pools: document.getElementById('pools-page'),
+      strategy: document.getElementById('strategy-page'),
+      alerts: document.getElementById('alerts-page'),
+      settings: document.getElementById('settings-page')
+    };
+    
+    const walletBtn = document.getElementById('wallet-btn');
+    const welcomeConnectBtn = document.getElementById('welcome-connect-btn');
+    const navLinks = document.querySelectorAll('.nav-link');
+    
+    // Chart Elements and Instances
+    let priceChartInstance = null;
+    let forecastChartInstance = null;
+    let volatilityChartInstance = null;
+    
+    // Position Management Elements
+    const minPriceRange = document.getElementById('min-price-range');
+    const maxPriceRange = document.getElementById('max-price-range');
+    const minPriceDisplay = document.getElementById('min-price-display');
+    const maxPriceDisplay = document.getElementById('max-price-display');
+    
+    // Modal Elements
+    const recommendationsModal = document.getElementById('recommendations-modal');
+    const transactionModal = document.getElementById('transaction-modal');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    
+    // Content Areas
+    const positionsGrid = document.getElementById('positions-grid');
+    const poolsTableBody = document.getElementById('pools-table-body');
+    const alertsTableBody = document.getElementById('alerts-table-body');
+    const strategyOptions = document.getElementById('strategy-options');
+    const strategyOptionsContainer = document.getElementById('strategy-options-container');
+
+    // Initialize App
+    document.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
+
+    // Initialize App
+    function initApp() {
+      setupEventListeners();
+      initUIComponents();
+      showWelcomePage();
+    }
+
+    // Setup Event Listeners
+    function setupEventListeners() {
+      // Wallet connection buttons
+      walletBtn.addEventListener('click', toggleWalletConnection);
+      welcomeConnectBtn.addEventListener('click', connectWallet);
+      
+      // Navigation links
+      navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          if (!appState.walletConnected) return;
+          
+          const page = link.getAttribute('data-page');
+          navigateTo(page);
+        });
+      });
+
+      // Range sliders
+      if (minPriceRange) {
+        minPriceRange.addEventListener('input', () => {
+          minPriceDisplay.textContent = minPriceRange.value;
+        });
+      }
+      if (maxPriceRange) {
+        maxPriceRange.addEventListener('input', () => {
+          maxPriceDisplay.textContent = maxPriceRange.value;
+        });
+      }
+
+      // Timeframe buttons
+      document.querySelectorAll('.timeframe-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const timeframe = btn.getAttribute('data-timeframe');
+          updateTimeframe(timeframe);
+        });
+      });
+
+      // Fee tier dropdown
+      const feeTierDropdown = document.getElementById('fee-tier-dropdown');
+      const feeTierMenu = document.getElementById('fee-tier-menu');
+      if (feeTierDropdown && feeTierMenu) {
+        feeTierDropdown.addEventListener('click', () => {
+          feeTierMenu.classList.toggle('show');
+        });
+        feeTierMenu.querySelectorAll('.dropdown-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const value = item.getAttribute('data-value');
+            document.getElementById('fee-tier-value').textContent = value;
+            feeTierMenu.classList.remove('show');
+          });
+        });
+      }
+
+      // Strategy page elements
+      const generateStrategiesBtn = document.getElementById('generate-strategies');
+      const resetStrategiesBtn = document.getElementById('reset-strategies');
+      const deployStrategyBtn = document.getElementById('deploy-strategy');
+      
+      if (generateStrategiesBtn) {
+        generateStrategiesBtn.addEventListener('click', generateStrategies);
+      }
+      if (resetStrategiesBtn) {
+        resetStrategiesBtn.addEventListener('click', resetStrategies);
+      }
+      if (deployStrategyBtn) {
+        deployStrategyBtn.addEventListener('click', deployStrategy);
+      }
+
+      // Position actions
+      const adjustPositionBtn = document.getElementById('adjust-position-btn');
+      const claimFeesBtn = document.getElementById('claim-fees-btn');
+      const viewRecommendations = document.getElementById('view-recommendations');
+      
+      if (adjustPositionBtn) {
+        adjustPositionBtn.addEventListener('click', showAdjustPositionConfirmation);
+      }
+      if (claimFeesBtn) {
+        claimFeesBtn.addEventListener('click', showClaimFeesConfirmation);
+      }
+      if (viewRecommendations) {
+        viewRecommendations.addEventListener('click', (e) => {
+          e.preventDefault();
+          showRecommendationsModal();
+        });
+      }
+
+      // Modal actions
+      const closeRecommendationsModal = document.getElementById('close-recommendations-modal');
+      const dismissRecommendations = document.getElementById('dismiss-recommendations');
+      const applyRecommendations = document.getElementById('apply-recommendations');
+      
+      if (closeRecommendationsModal) {
+        closeRecommendationsModal.addEventListener('click', hideRecommendationsModal);
+      }
+      if (dismissRecommendations) {
+        dismissRecommendations.addEventListener('click', hideRecommendationsModal);
+      }
+      if (applyRecommendations) {
+        applyRecommendations.addEventListener('click', applyRecommendedChanges);
+      }
+
+      const closeTransactionModal = document.getElementById('close-transaction-modal');
+      const cancelTransaction = document.getElementById('cancel-transaction');
+      const confirmTransaction = document.getElementById('confirm-transaction');
+      
+      if (closeTransactionModal) {
+        closeTransactionModal.addEventListener('click', hideTransactionModal);
+      }
+      if (cancelTransaction) {
+        cancelTransaction.addEventListener('click', hideTransactionModal);
+      }
+      if (confirmTransaction) {
+        confirmTransaction.addEventListener('click', processTransaction);
+      }
+
+      // Click anywhere to close dropdowns
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+          document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+          });
+        }
+      });
+    }
+
+    // Initialize UI Components
+    function initUIComponents() {
+      // Hide all pages initially
+      Object.values(pages).forEach(page => {
+        if (page) page.classList.remove('active');
+      });
+    }
+
+    // Show Welcome Page
+    function showWelcomePage() {
+      // Hide all pages
+      Object.values(pages).forEach(page => {
+        if (page) page.classList.remove('active');
+      });
+      
+      // Show welcome page
+      if (pages.welcome) {
+        pages.welcome.classList.add('active');
+      }
+      
+      // Update navigation
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+      });
+    }
+
+    // Navigate to Page
+    function navigateTo(page) {
+      appState.currentPage = page;
+      
+      // Hide all pages
+      Object.values(pages).forEach(p => {
+        if (p) p.classList.remove('active');
+      });
+      
+      // Show selected page
+      if (pages[page]) {
+        pages[page].classList.add('active');
+      }
+      
+      // Update active nav link
+      navLinks.forEach(link => {
+        link.classList.remove('active');
+      });
+      const activeLink = document.querySelector(`.nav-link[data-page="${page}"]`);
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+      
+      // Initialize page-specific components
+      if (page === 'dashboard') {
+        initDashboard();
+      } else if (page === 'positions') {
+        loadPositions();
+      } else if (page === 'pools') {
+        loadPools();
+      } else if (page === 'strategy') {
+        initStrategyBuilder();
+      } else if (page === 'alerts') {
+        loadAlerts();
+      }
+    }
+
+    // Toggle Wallet Connection
+    function toggleWalletConnection() {
+      if (appState.walletConnected) {
+        disconnectWallet();
+      } else {
+        connectWallet();
+      }
+    }
+
+    // Connect Wallet
+    function connectWallet() {
+      showLoading();
+      
+      // Simulate wallet connection (with delay for UX)
+      setTimeout(() => {
+        appState.walletConnected = true;
+        
+        // Update wallet button
+        walletBtn.classList.add('wallet-connected');
+        walletBtn.innerHTML = `
+          <i class="fas fa-wallet"></i>
+          <span>Wallet Connected</span>
+        `;
+        
+        // Navigate to dashboard
+        navigateTo('dashboard');
+        
+        // Show success toast
+        showToast('Wallet connected successfully', 'success');
+        
+        hideLoading();
+      }, 1000);
+    }
+
+    // Disconnect Wallet
+    function disconnectWallet() {
+      showLoading();
+      
+      // Simulate wallet disconnection (with delay for UX)
+      setTimeout(() => {
+        appState.walletConnected = false;
+        
+        // Update wallet button
+        walletBtn.classList.remove('wallet-connected');
+        walletBtn.innerHTML = `
+          <i class="fas fa-wallet"></i>
+          <span>Connect Wallet</span>
+        `;
+        
+        // Show welcome page
+        showWelcomePage();
+        
+        // Show info toast
+        showToast('Wallet disconnected', 'info');
+        
+        hideLoading();
+      }, 1000);
+    }
+
+    // Initialize Dashboard
+    function initDashboard() {
+      initPriceChart();
+      initForecastChart();
+    }
+
+    // Initialize Price Chart
+    function initPriceChart() {
+      const priceChartEl = document.getElementById('priceChart');
+      if (!priceChartEl) return;
+      
+      const ctx = priceChartEl.getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (priceChartInstance) {
+        priceChartInstance.destroy();
+      }
+      
+      const currentTimeframeData = priceData[appState.selectedTimeframe];
+      
+      priceChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: currentTimeframeData.map(item => {
+            const date = new Date(item.time);
+            if (appState.selectedTimeframe === '24h') {
+              return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } else {
+              return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            }
+          }),
+          datasets: [
+            {
+              label: 'Price',
+              data: currentTimeframeData.map(item => item.price),
+              borderColor: 'rgb(115, 103, 240)',
+              backgroundColor: 'rgba(115, 103, 240, 0.5)',
+              tension: 0.4,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Volume',
+              data: currentTimeframeData.map(item => item.volume),
+              borderColor: 'rgb(40, 199, 111)',
+              backgroundColor: 'rgba(40, 199, 111, 0.2)',
+              tension: 0.4,
+              type: 'bar',
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          scales: {
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              grid: {
+                display: false
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#B4B7BD'
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          }
+        }
+      });
+    }
+    // Initialize Forecast Chart
+    function initForecastChart() {
+      const forecastChartEl = document.getElementById('forecastChart');
+      if (!forecastChartEl) return;
+      
+      const ctx = forecastChartEl.getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (forecastChartInstance) {
+        forecastChartInstance.destroy();
+      }
+      
+      // Generate forecast data
+      const forecastData = generateForecastData();
+      
+      forecastChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: forecastData.dates,
+          datasets: [
+            {
+              label: 'Historical Fee APR',
+              data: forecastData.historicalFees,
+              borderColor: 'rgb(115, 103, 240)',
+              backgroundColor: 'rgba(115, 103, 240, 0.5)',
+              tension: 0.4
+            },
+            {
+              label: 'Projected Fee APR',
+              data: forecastData.projectedFees,
+              borderColor: 'rgb(40, 199, 111)',
+              backgroundColor: 'rgba(40, 199, 111, 0.5)',
+              borderDash: [5, 5],
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: 'Fee APR (%)'
+              },
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#B4B7BD'
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          }
+        }
+      });
+    }
+
+    // Generate Forecast Data
+    function generateForecastData() {
+      const dates = [];
+      const historicalFees = [];
+      const projectedFees = [];
+      
+      const now = new Date();
+      
+      // Historical data (past 30 days)
+      for (let i = 30; i > 0; i--) {
+        const date = new Date(now);
+        date.setDate(now.getDate() - i);
+        dates.push(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+        
+        // Generate random APR between 12% and 18%
+        const feeApr = 12 + Math.random() * 6;
+        historicalFees.push(feeApr);
+        projectedFees.push(null);
+      }
+      
+      // Current date
+      dates.push(now.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+      historicalFees.push(14.2);
+      projectedFees.push(14.2);
+      
+      // Projected data (next 30 days)
+      for (let i = 1; i <= 30; i++) {
+        const date = new Date(now);
+        date.setDate(now.getDate() + i);
+        dates.push(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+        
+        // Generate projected APR with slight variations
+        const prevApr = i === 1 ? 14.2 : projectedFees[projectedFees.length - 1];
+        const change = (Math.random() - 0.45) * 0.8; // Slight upward bias
+        const feeApr = Math.max(10, Math.min(20, prevApr + change));
+        
+        historicalFees.push(null);
+        projectedFees.push(feeApr);
+      }
+      
+      return { dates, historicalFees, projectedFees };
+    }
+
+    // Initialize Strategy Builder
+    function initStrategyBuilder() {
+      const volatilityChartEl = document.getElementById('volatilityChart');
+      if (!volatilityChartEl) return;
+      
+      // Initialize volatility chart
+      const ctx = volatilityChartEl.getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (volatilityChartInstance) {
+        volatilityChartInstance.destroy();
+      }
+      
+      // Generate volatility data
+      const volatilityData = generateVolatilityData();
+      
+      volatilityChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: volatilityData.dates,
+          datasets: [
+            {
+              label: 'SOL/USDC Volatility',
+              data: volatilityData.volatility,
+              borderColor: 'rgb(115, 103, 240)',
+              backgroundColor: 'rgba(115, 103, 240, 0.2)',
+              tension: 0.4,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: 'Volatility (%)'
+              },
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            },
+            x: {
+              grid: {
+                color: 'rgba(59, 66, 83, 0.5)'
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                color: '#B4B7BD'
+              }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          }
+        }
+      });
+
+      // Setup dropdown menus
+      setupDropdown('token-pair-dropdown', 'token-pair-menu', 'token-pair-value');
+      setupDropdown('timeframe-dropdown', 'timeframe-menu', 'timeframe-value');
+      
+     // Setup risk tolerance
+     const riskTolerance = document.getElementById('risk-tolerance');
+      const riskValue = document.getElementById('risk-value');
+      if (riskTolerance && riskValue) {
+        riskTolerance.addEventListener('input', () => {
+          const value = parseInt(riskTolerance.value);
+          let riskText;
+          
+          if (value <= 3) {
+            riskText = 'Conservative';
+          } else if (value <= 7) {
+            riskText = 'Moderate';
+          } else {
+            riskText = 'Aggressive';
+          }
+          
+          riskValue.textContent = riskText;
+        });
+      }
+    }
+
+    // Generate Volatility Data
+    function generateVolatilityData() {
+      const dates = [];
+      const volatility = [];
+      
+      const now = new Date();
+      
+      for (let i = 30; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(now.getDate() - i);
+        dates.push(date.toLocaleDateString([], { month: 'short', day: 'numeric' }));
+        
+        // Generate random volatility between 15% and 35%
+        // With an increasing trend over the last week
+        let vol;
+        if (i < 7) {
+          vol = 20 + (7 - i) * 1.2 + Math.random() * 5;
+        } else {
+          vol = 15 + Math.random() * 10;
+        }
+        
+        volatility.push(vol);
+      }
+      
+      return { dates, volatility };
+    }
+
+    // Set up dropdown functionality
+    function setupDropdown(dropdownId, menuId, valueId) {
+      const dropdown = document.getElementById(dropdownId);
+      const menu = document.getElementById(menuId);
+      const value = document.getElementById(valueId);
+      
+      if (!dropdown || !menu || !value) return;
+      
+      dropdown.addEventListener('click', () => {
+        menu.classList.toggle('show');
+      });
+      
+      menu.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', () => {
+          value.textContent = item.textContent.trim();
+          menu.classList.remove('show');
+        });
+      });
+    }
+
+    // Update timeframe
+    function updateTimeframe(timeframe) {
+      appState.selectedTimeframe = timeframe;
+      
+      // Update active button
+      document.querySelectorAll('.timeframe-btn').forEach(btn => {
+        const btnTimeframe = btn.getAttribute('data-timeframe');
+        if (btnTimeframe === timeframe) {
+          btn.classList.remove('btn-outline');
+          btn.classList.add('btn-primary');
+        } else {
+          btn.classList.remove('btn-primary');
+          btn.classList.add('btn-outline');
+        }
+      });
+      
+      // Update chart
+      initPriceChart();
+    }
+
+    // Load Positions
+    function loadPositions() {
+      if (!positionsGrid) return;
+      
+      // Clear existing positions
+      positionsGrid.innerHTML = '';
+      
+      // Add position cards
+      mockData.positions.forEach(position => {
+        // Create health class based on value
+        let healthClass, healthText;
+        if (position.health >= 80) {
+          healthClass = 'bg-green';
+          healthText = 'Optimal';
+        } else if (position.health >= 60) {
+          healthClass = 'bg-blue';
+          healthText = 'Good';
+        } else if (position.health >= 40) {
+          healthClass = 'bg-yellow';
+          healthText = 'Fair';
+        } else {
+          healthClass = 'bg-red';
+          healthText = 'Poor';
+        }
+        
+        // Create status badge
+        let statusBadge;
+        if (position.status === 'active') {
+          statusBadge = `<span class="badge badge-success">Active</span>`;
+        } else if (position.status === 'outOfRange') {
+          statusBadge = `<span class="badge badge-warning">Out of Range</span>`;
+        } else {
+          statusBadge = `<span class="badge badge-danger">Inactive</span>`;
+        }
+        
+        // Create position card
+        const positionCard = document.createElement('div');
+        positionCard.className = 'card position-card';
+        positionCard.innerHTML = `
+          <div class="card-header">
+            <h3 class="card-title">${position.pair}</h3>
+            ${statusBadge}
+          </div>
+          <div class="card-body">
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Position Value</span>
+              <span class="text-sm">$${position.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Price Range</span>
+              <span class="text-sm">$${position.minPrice} - $${position.maxPrice}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Fee Tier</span>
+              <span class="text-sm">${position.feeTier}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Fees Earned</span>
+              <span class="text-sm">$${position.feeEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Health</span>
+              <span class="text-sm">${healthText} (${position.health}%)</span>
+            </div>
+            <div class="health-indicator mt-2">
+              <div class="health-bar ${healthClass}" style="width: ${position.health}%"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-sm btn-outline position-details-btn" data-position-id="${position.id}">
+              View Details
+            </button>
+            <button class="btn btn-sm btn-primary claim-position-fees-btn" data-position-id="${position.id}">
+              Claim Fees
+            </button>
+          </div>
+        `;
+        
+        // Add to grid
+        positionsGrid.appendChild(positionCard);
+      });
+      
+      // Add event listeners to position buttons
+      document.querySelectorAll('.position-details-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const positionId = btn.getAttribute('data-position-id');
+          viewPositionDetails(positionId);
+        });
+      });
+      
+      document.querySelectorAll('.claim-position-fees-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const positionId = btn.getAttribute('data-position-id');
+          claimPositionFees(positionId);
+        });
+      });
+      
+      // Setup filters
+      setupDropdown('status-filter-dropdown', 'status-filter-menu', 'status-filter-value');
+      setupDropdown('sort-dropdown', 'sort-menu', 'sort-value');
+      
+      const positionSearch = document.getElementById('position-search');
+      if (positionSearch) {
+        positionSearch.addEventListener('input', filterPositions);
+      }
+    }
+
+    // View Position Details
+    function viewPositionDetails(positionId) {
+      const position = mockData.positions.find(p => p.id === positionId);
+      if (!position) return;
+      
+      appState.selectedPosition = position;
+      
+      // Set position management values
+      if (minPriceRange && maxPriceRange && minPriceDisplay && maxPriceDisplay) {
+        minPriceRange.value = position.minPrice;
+        maxPriceRange.value = position.maxPrice;
+        minPriceDisplay.textContent = position.minPrice;
+        maxPriceDisplay.textContent = position.maxPrice;
+      }
+      
+      const feeTierValue = document.getElementById('fee-tier-value');
+      if (feeTierValue) {
+        feeTierValue.textContent = position.feeTier;
+      }
+      
+      // Navigate to dashboard
+      navigateTo('dashboard');
+      
+      // Show toast
+      showToast(`Viewing position ${position.pair}`, 'info');
+    }
+
+    // Filter Positions
+    function filterPositions() {
+      const positionSearch = document.getElementById('position-search');
+      const statusFilterValue = document.getElementById('status-filter-value');
+      const sortValue = document.getElementById('sort-value');
+      
+      if (!positionSearch || !statusFilterValue || !sortValue || !positionsGrid) return;
+      
+      const searchTerm = positionSearch.value.toLowerCase();
+      const statusFilter = statusFilterValue.textContent;
+      const sortOption = sortValue.textContent;
+      
+      // Filter positions
+      let filteredPositions = mockData.positions.filter(position => {
+        // Apply search filter
+        if (searchTerm && !position.pair.toLowerCase().includes(searchTerm) && !position.id.toLowerCase().includes(searchTerm)) {
+          return false;
+        }
+        
+        // Apply status filter
+        if (statusFilter !== 'All Statuses') {
+          if (statusFilter === 'Active' && position.status !== 'active') {
+            return false;
+          } else if (statusFilter === 'Out of Range' && position.status !== 'outOfRange') {
+            return false;
+          }
+        }
+        
+        return true;
+      });
+      
+      // Sort positions
+      if (sortOption === 'Value (High to Low)') {
+        filteredPositions.sort((a, b) => b.value - a.value);
+      } else if (sortOption === 'Value (Low to High)') {
+        filteredPositions.sort((a, b) => a.value - b.value);
+      } else if (sortOption === 'Fees (High to Low)') {
+        filteredPositions.sort((a, b) => b.feeEarned - a.feeEarned);
+      } else if (sortOption === 'Health (High to Low)') {
+        filteredPositions.sort((a, b) => b.health - a.health);
+      }
+      
+      // Update positions grid
+      positionsGrid.innerHTML = '';
+      
+      if (filteredPositions.length === 0) {
+        const noResults = document.createElement('div');
+        noResults.className = 'text-center p-2';
+        noResults.textContent = 'No positions match your filters';
+        positionsGrid.appendChild(noResults);
+        return;
+      }
+      // Add position cards for filtered positions
+      filteredPositions.forEach(position => {
+        // Create health class based on value
+        let healthClass, healthText;
+        if (position.health >= 80) {
+          healthClass = 'bg-green';
+          healthText = 'Optimal';
+        } else if (position.health >= 60) {
+          healthClass = 'bg-blue';
+          healthText = 'Good';
+        } else if (position.health >= 40) {
+          healthClass = 'bg-yellow';
+          healthText = 'Fair';
+        } else {
+          healthClass = 'bg-red';
+          healthText = 'Poor';
+        }
+        
+        // Create status badge
+        let statusBadge;
+        if (position.status === 'active') {
+          statusBadge = `<span class="badge badge-success">Active</span>`;
+        } else if (position.status === 'outOfRange') {
+          statusBadge = `<span class="badge badge-warning">Out of Range</span>`;
+        } else {
+          statusBadge = `<span class="badge badge-danger">Inactive</span>`;
+        }
+        
+        // Create position card
+        const positionCard = document.createElement('div');
+        positionCard.className = 'card position-card';
+        positionCard.innerHTML = `
+          <div class="card-header">
+            <h3 class="card-title">${position.pair}</h3>
+            ${statusBadge}
+          </div>
+          <div class="card-body">
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Position Value</span>
+              <span class="text-sm">$${position.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Price Range</span>
+              <span class="text-sm">$${position.minPrice} - $${position.maxPrice}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Fee Tier</span>
+              <span class="text-sm">${position.feeTier}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Fees Earned</span>
+              <span class="text-sm">$${position.feeEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
+            <div class="flex justify-between mb-2">
+              <span class="text-sm">Health</span>
+              <span class="text-sm">${healthText} (${position.health}%)</span>
+            </div>
+            <div class="health-indicator mt-2">
+              <div class="health-bar ${healthClass}" style="width: ${position.health}%"></div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <button class="btn btn-sm btn-outline position-details-btn" data-position-id="${position.id}">
+              View Details
+            </button>
+            <button class="btn btn-sm btn-primary claim-position-fees-btn" data-position-id="${position.id}">
+              Claim Fees
+            </button>
+          </div>
+        `;
+        
+        // Add to grid
+        positionsGrid.appendChild(positionCard);
+      });
+      
+      // Re-add event listeners
+      document.querySelectorAll('.position-details-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const positionId = btn.getAttribute('data-position-id');
+          viewPositionDetails(positionId);
+        });
+      });
+      
+      document.querySelectorAll('.claim-position-fees-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const positionId = btn.getAttribute('data-position-id');
+          claimPositionFees(positionId);
+        });
+      });
+    }
+
+    // Claim Position Fees
+    function claimPositionFees(positionId) {
+      const position = mockData.positions.find(p => p.id === positionId);
+      if (!position) return;
+      
+      const txAction = document.getElementById('tx-action');
+      const txPosition = document.getElementById('tx-position');
+      const txParams = document.getElementById('tx-params');
+      const txGas = document.getElementById('tx-gas');
+      
+      if (txAction && txPosition && txParams && txGas) {
+        // Set transaction details
+        txAction.textContent = 'Claim Fees';
+        txPosition.textContent = `${position.pair} ${position.id}`;
+        txParams.textContent = `Claimed Fees: $${position.feeEarned.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        txGas.textContent = '0.000008 SOL';
+      }
+      
+      // Show modal
+      if (transactionModal) {
+        transactionModal.classList.add('active');
+      }
+    }
+
+    // Load Pools
+    function loadPools() {
+      if (!poolsTableBody) return;
+      
+      // Clear existing pools
+      poolsTableBody.innerHTML = '';
+      
+      // Add pool rows
+      mockData.pools.forEach(pool => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <div class="flex items-center">
+              <div class="token-pair mr-2">
+                <div class="token-icon bg-accent text-white">
+                  ${pool.pair.split('/')[0][0]}
+                  <div class="token-secondary bg-accent text-white">
+                    ${pool.pair.split('/')[1][0]}
+                  </div>
+                </div>
+              </div>
+              <span>${pool.pair}</span>
+            </div>
+          </td>
+          <td>$${pool.tvl.toLocaleString('en-US')}</td>
+          <td>$${pool.volume24h.toLocaleString('en-US')}</td>
+          <td>$${pool.fees24h.toLocaleString('en-US')}</td>
+          <td>${pool.apr.toFixed(2)}%</td>
+          <td>
+            <button class="btn btn-sm btn-primary add-liquidity-btn" data-pool="${pool.pair}">
+              Add Liquidity
+            </button>
+          </td>
+        `;
+        
+        // Add to table
+        poolsTableBody.appendChild(row);
+      });
+      
+      // Add event listeners to add liquidity buttons
+      document.querySelectorAll('.add-liquidity-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const poolPair = btn.getAttribute('data-pool');
+          addLiquidity(poolPair);
+        });
+      });
+    }
+
+    // Add Liquidity
+    function addLiquidity(poolPair) {
+      const tokenPairValue = document.getElementById('token-pair-value');
+      if (tokenPairValue) {
+        tokenPairValue.textContent = poolPair;
+      }
+      
+      // Navigate to strategy builder
+      navigateTo('strategy');
+      
+      // Show toast
+      showToast(`Adding liquidity to ${poolPair} pool`, 'info');
+    }
+
+    // Load Alerts
+    function loadAlerts() {
+      if (!alertsTableBody) return;
+      
+      // Clear existing alerts
+      alertsTableBody.innerHTML = '';
+      
+      // Add alert rows
+      mockData.alerts.forEach(alert => {
+        // Create alert type badge
+        let typeBadge;
+        if (alert.type === 'price') {
+          typeBadge = `<span class="badge badge-info">Price</span>`;
+        } else if (alert.type === 'position') {
+          typeBadge = `<span class="badge badge-warning">Position</span>`;
+        } else if (alert.type === 'system') {
+          typeBadge = `<span class="badge badge-success">System</span>`;
+        }
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${typeBadge}</td>
+          <td>${alert.message}</td>
+          <td>${alert.createdAt}</td>
+          <td>
+            <button class="btn btn-sm btn-outline mark-read-btn" data-alert-id="${alert.id}">
+              Mark Read
+            </button>
+          </td>
+        `;
+        
+        // Add to table
+        alertsTableBody.appendChild(row);
+      });
+      
+      // Add event listeners to mark read buttons
+      document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const alertId = btn.getAttribute('data-alert-id');
+          markAlertRead(alertId);
+        });
+      });
+      
+      // Set up alert creation elements
+      setupDropdown('alert-type-dropdown', 'alert-type-menu', 'alert-type-value');
+      setupDropdown('alert-token-dropdown', 'alert-token-menu', 'alert-token-value');
+      setupDropdown('condition-dropdown', 'condition-menu', 'condition-value');
+      
+      const createAlertBtn = document.getElementById('create-alert');
+      if (createAlertBtn) {
+        createAlertBtn.addEventListener('click', createAlert);
+      }
+      
+      const markAllReadBtn = document.getElementById('mark-all-read');
+      if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', markAllAlertsRead);
+      }
+      
+      // Update alerts badge
+      const unreadCount = mockData.alerts.filter(a => a.status === 'unread').length;
+      const alertsBadge = document.querySelector('.nav-link[data-page="alerts"] .nav-badge');
+      if (alertsBadge) {
+        if (unreadCount > 0) {
+          alertsBadge.textContent = unreadCount;
+          alertsBadge.style.display = 'flex';
+        } else {
+          alertsBadge.style.display = 'none';
+        }
+      }
+    }
+
+    // Mark Alert Read
+    function markAlertRead(alertId) {
+      // Find alert
+      const alert = mockData.alerts.find(a => a.id === alertId);
+      if (alert) {
+        alert.status = 'read';
+        
+        // Reload alerts
+        loadAlerts();
+        
+        // Show toast
+        showToast('Alert marked as read', 'info');
+      }
+    }
+
+    // Mark All Alerts Read
+    function markAllAlertsRead() {
+      // Update all alerts
+      mockData.alerts.forEach(alert => {
+        alert.status = 'read';
+      });
+      
+      // Reload alerts
+      loadAlerts();
+      
+      // Show toast
+      showToast('All alerts marked as read', 'info');
+    }
+
+    // Create Alert
+    function createAlert() {
+      showLoading();
+      
+      const alertTypeValue = document.getElementById('alert-type-value');
+      const alertTokenValue = document.getElementById('alert-token-value');
+      const conditionValue = document.getElementById('condition-value');
+      const conditionValueInput = document.getElementById('condition-value');
+      
+      if (!alertTypeValue || !alertTokenValue || !conditionValue || !conditionValueInput) {
+        hideLoading();
+        return;
+      }
+      
+      // Simulate alert creation
+      setTimeout(() => {
+        // Generate new alert ID
+        const newAlertId = `alert-${mockData.alerts.length + 1}`;
+        
+        // Create new alert object
+        const newAlert = {
+          id: newAlertId,
+          type: alertTypeValue.textContent.toLowerCase().includes('price') ? 'price' : 
+                alertTypeValue.textContent.toLowerCase().includes('range') ? 'position' : 'volume',
+          message: `${alertTypeValue.textContent} for ${alertTokenValue.textContent}: ${conditionValue.textContent} $${conditionValueInput.value}`,
+          createdAt: 'just now',
+          status: 'unread'
+        };
+        
+        // Add to alerts array
+        mockData.alerts.unshift(newAlert);
+        
+        // Reload alerts
+        loadAlerts();
+        
+        // Show toast
+        showToast('Alert created successfully', 'success');
+        
+        hideLoading();
+      }, 1000);
+    }
+    // Generate Strategies
+    function generateStrategies() {
+      if (!strategyOptionsContainer || !strategyOptions) return;
+      
+      showLoading();
+      
+      // Simulate strategy generation
+      setTimeout(() => {
+        // Show strategy options
+        strategyOptionsContainer.classList.remove('hidden');
+        
+        // Populate strategy options
+        strategyOptions.innerHTML = '';
+        
+        mockData.strategies.forEach(strategy => {
+          const strategyCard = document.createElement('div');
+          strategyCard.className = 'card strategy-card';
+          strategyCard.setAttribute('data-strategy-id', strategy.id);
+          strategyCard.innerHTML = `
+            <div class="card-body">
+              <h3 class="card-title mb-2">${strategy.name}</h3>
+              <p class="text-sm text-muted mb-4">${strategy.description}</p>
+              
+              <div class="flex justify-between mb-2">
+                <span class="text-sm">Price Range</span>
+                <span class="text-sm">$${strategy.minPrice} - $${strategy.maxPrice}</span>
+              </div>
+              
+              <div class="flex justify-between mb-2">
+                <span class="text-sm">Fee Tier</span>
+                <span class="text-sm">${strategy.feeTier}</span>
+              </div>
+              
+              <div class="flex justify-between mb-2">
+                <span class="text-sm">Est. APR</span>
+                <span class="text-sm text-success">${strategy.estimatedApr}%</span>
+              </div>
+              
+              <div class="flex justify-between mb-2">
+                <span class="text-sm">Risk Level</span>
+                <span class="text-sm ${strategy.riskLevel === 'Low' ? 'text-success' : strategy.riskLevel === 'Medium' ? 'text-warning' : 'text-danger'}">${strategy.riskLevel}</span>
+              </div>
+            </div>
+          `;
+          
+          // Add event listener to strategy card
+          strategyCard.addEventListener('click', () => {
+            selectStrategy(strategy.id);
+          });
+          
+          // Add to grid
+          strategyOptions.appendChild(strategyCard);
+        });
+        
+        hideLoading();
+        
+        // Show toast
+        showToast('Strategies generated successfully', 'success');
+        
+        // Select first strategy by default
+        selectStrategy(mockData.strategies[0].id);
+      }, 1500);
+    }
+
+    // Select Strategy
+    function selectStrategy(strategyId) {
+      // Update selected strategy in state
+      appState.selectedStrategy = mockData.strategies.find(s => s.id === strategyId);
+      
+      // Update UI
+      const strategyCards = document.querySelectorAll('.strategy-card');
+      strategyCards.forEach(card => {
+        if (card.getAttribute('data-strategy-id') === strategyId) {
+          card.classList.add('selected');
+        } else {
+          card.classList.remove('selected');
+        }
+      });
+    }
+
+    // Reset Strategies
+    function resetStrategies() {
+      if (!strategyOptionsContainer) return;
+      
+      // Hide strategy options
+      strategyOptionsContainer.classList.add('hidden');
+      
+      // Reset form fields
+      const tokenPairValue = document.getElementById('token-pair-value');
+      const investmentAmount = document.getElementById('investment-amount');
+      const timeframeValue = document.getElementById('timeframe-value');
+      const riskTolerance = document.getElementById('risk-tolerance');
+      const riskValue = document.getElementById('risk-value');
+      
+      if (tokenPairValue) tokenPairValue.textContent = 'SOL/USDC';
+      if (investmentAmount) investmentAmount.value = '10000';
+      if (timeframeValue) timeframeValue.textContent = '30 days';
+      if (riskTolerance) riskTolerance.value = '5';
+      if (riskValue) riskValue.textContent = 'Moderate';
+      
+      // Reset selected strategy
+      appState.selectedStrategy = null;
+    }
+
+    // Deploy Strategy
+    function deployStrategy() {
+      if (!appState.selectedStrategy) {
+        showToast('Please select a strategy first', 'warning');
+        return;
+      }
+      
+      showLoading();
+      
+      const tokenPairValue = document.getElementById('token-pair-value');
+      const investmentAmount = document.getElementById('investment-amount');
+      const txAction = document.getElementById('tx-action');
+      const txPosition = document.getElementById('tx-position');
+      const txParams = document.getElementById('tx-params');
+      const txGas = document.getElementById('tx-gas');
+      
+      // Simulate deployment
+      setTimeout(() => {
+        if (txAction && txPosition && txParams && txGas && tokenPairValue && investmentAmount) {
+          // Set transaction details
+          txAction.textContent = 'Deploy Strategy';
+          txPosition.textContent = tokenPairValue.textContent;
+          txParams.textContent = `Price Range: $${appState.selectedStrategy.minPrice} - $${appState.selectedStrategy.maxPrice}, Fee Tier: ${appState.selectedStrategy.feeTier}, Amount: $${investmentAmount.value}`;
+          txGas.textContent = '0.000021 SOL';
+        }
+        
+        hideLoading();
+        
+        // Show modal
+        if (transactionModal) {
+          transactionModal.classList.add('active');
+        }
+      }, 1000);
+    }
+
+    // Show Adjust Position Confirmation
+    function showAdjustPositionConfirmation() {
+      const minPriceDisplay = document.getElementById('min-price-display');
+      const maxPriceDisplay = document.getElementById('max-price-display');
+      const feeTierValue = document.getElementById('fee-tier-value');
+      const txAction = document.getElementById('tx-action');
+      const txPosition = document.getElementById('tx-position');
+      const txParams = document.getElementById('tx-params');
+      const txGas = document.getElementById('tx-gas');
+      
+      if (!minPriceDisplay || !maxPriceDisplay || !feeTierValue || !txAction || !txPosition || !txParams || !txGas) return;
+      
+      // Set transaction details
+      txAction.textContent = 'Adjust Position Range';
+      txPosition.textContent = 'SOL/USDC #0012';
+      txParams.textContent = `Price Range: $${minPriceDisplay.textContent} - $${maxPriceDisplay.textContent}, Fee Tier: ${feeTierValue.textContent}`;
+      txGas.textContent = '0.000014 SOL';
+      
+      // Show modal
+      if (transactionModal) {
+        transactionModal.classList.add('active');
+      }
+    }
+
+    // Show Claim Fees Confirmation
+    function showClaimFeesConfirmation() {
+      const txAction = document.getElementById('tx-action');
+      const txPosition = document.getElementById('tx-position');
+      const txParams = document.getElementById('tx-params');
+      const txGas = document.getElementById('tx-gas');
+      
+      if (!txAction || !txPosition || !txParams || !txGas) return;
+      
+      // Set transaction details
+      txAction.textContent = 'Claim Fees';
+      txPosition.textContent = 'SOL/USDC #0012';
+      txParams.textContent = 'Claimed Fees: $187.45';
+      txGas.textContent = '0.000008 SOL';
+      
+      // Show modal
+      if (transactionModal) {
+        transactionModal.classList.add('active');
+      }
+    }
+
+    // Show Recommendations Modal
+    function showRecommendationsModal() {
+      if (recommendationsModal) {
+        recommendationsModal.classList.add('active');
+      }
+    }
+
+    // Hide Recommendations Modal
+    function hideRecommendationsModal() {
+      if (recommendationsModal) {
+        recommendationsModal.classList.remove('active');
+      }
+    }
+
+    // Hide Transaction Modal
+    function hideTransactionModal() {
+      if (transactionModal) {
+        transactionModal.classList.remove('active');
+      }
+    }
+
+    // Apply Recommended Changes
+    function applyRecommendedChanges() {
+      showLoading();
+      
+      // Simulate processing
+      setTimeout(() => {
+        // Update price range values
+        if (minPriceRange && maxPriceRange && minPriceDisplay && maxPriceDisplay) {
+          minPriceRange.value = 85.30;
+          maxPriceRange.value = 102.50;
+          minPriceDisplay.textContent = '85.30';
+          maxPriceDisplay.textContent = '102.50';
+        }
+        
+        // Update fee tier
+        const feeTierValue = document.getElementById('fee-tier-value');
+        if (feeTierValue) {
+          feeTierValue.textContent = '0.05%';
+        }
+        
+        // Hide recommendations modal
+        hideRecommendationsModal();
+        
+        // Show success toast
+        showToast('Position adjusted successfully', 'success');
+        
+        hideLoading();
+      }, 1000);
+    }
+
+    // Process Transaction
+    function processTransaction() {
+      showLoading();
+      
+      // Simulate transaction processing
+      setTimeout(() => {
+        // Hide transaction modal
+        hideTransactionModal();
+        
+        // Show success toast
+        showToast('Transaction confirmed successfully', 'success');
+        
+        // If claiming fees, update the value
+        const txAction = document.getElementById('tx-action');
+        if (txAction && txAction.textContent === 'Claim Fees') {
+          // Update first position fee earned to 0
+          mockData.positions[0].feeEarned = 0;
+          
+          // If on positions page, refresh the display
+          if (appState.currentPage === 'positions') {
+            loadPositions();
+          }
+        }
+        
+        hideLoading();
+      }, 1500);
+    }
+
+    // Show Loading Overlay
+    function showLoading() {
+      if (loadingOverlay) {
+        loadingOverlay.classList.add('active');
+      }
+    }
+
+    // Hide Loading Overlay
+    function hideLoading() {
+      if (loadingOverlay) {
+        loadingOverlay.classList.remove('active');
+      }
+    }
+
+    // Show Toast Notification
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toast-container');
+      if (!toastContainer) return;
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      
+      let icon;
+      if (type === 'success') {
+        icon = 'check-circle';
+      } else if (type === 'error') {
+        icon = 'times-circle';
+      } else if (type === 'warning') {
+        icon = 'exclamation-triangle';
+      } else {
+        icon = 'info-circle';
+      }
+      
+      toast.innerHTML = `
+        <div class="toast-icon">
+          <i class="fas fa-${icon}"></i>
+        </div>
+        <div class="toast-content">
+          ${message}
+        </div>
+        <button class="toast-close">&times;</button>
+      `;
+      
+      // Add to container
+      toastContainer.appendChild(toast);
+      
+      // Add event listener to close button
+      toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.classList.remove('active');
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      });
+      
+      // Show toast
+      setTimeout(() => {
+        toast.classList.add('active');
+      }, 10);
+      
+      // Auto hide after 5 seconds
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.classList.remove('active');
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.remove();
+            }
+          }, 300);
+        }
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
